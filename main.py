@@ -279,7 +279,7 @@ async def error_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     """Botu başlat"""
     # TOKEN'ınızı buraya girin
-    TOKEN = "8424668193:AAEDATyRHmmejUxvFv_klhV2a9xWGO1oiQ0"
+    TOKEN = "8678674929:AAE9XKGHTpeaazj2OQgvSsxUMa3fvDAl-4M"
     
     application = Application.builder().token(TOKEN).build()
     
