@@ -11,9 +11,6 @@ from telegram.ext import (
 # ─── AYARLAR ────────────────────────────────────────────────
 BOT_TOKEN = "8734755865:AAGxtRIovW_RL3D2YtZiJpxfOoLTeIASIOQ"
 
-# @ linklerini de sil? (True = sil, False = sadece t.me linklerini sil)
-REMOVE_AT_LINKS = True
-
 # Sadece bu grup ID'lerinde çalışsın (boş bırakırsan tüm gruplarda çalışır)
 # Örnek: ALLOWED_GROUPS = [-1001234567890, -1009876543210]
 ALLOWED_GROUPS = []
@@ -25,26 +22,42 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Silinecek link pattern'ları
-LINK_PATTERNS = [
-    r'https?://t\.me/joinchat/[^\s,،؛;\'")\]}>]+',
-    r'https?://t\.me/\+[^\s,،؛;\'")\]}>]+',
-    r'https?://t\.me/[a-zA-Z][a-zA-Z0-9_]{3,}(?:/\d+)?',
-    r'https?://telegram\.me/[^\s,،؛;\'")\]}>]+',
-    r'https?://telegram\.dog/[^\s,،؛;\'")\]}>]+',
-]
-
-AT_PATTERN = r'@[a-zA-Z][a-zA-Z0-9_]{3,}'
-
-COMBINED_PATTERN = re.compile(
-    '|'.join(LINK_PATTERNS) + (f'|{AT_PATTERN}' if REMOVE_AT_LINKS else ''),
+# Sadece t.me URL formatındaki linkleri yakala (@ kullanıcı adlarına dokunma)
+URL_PATTERN = re.compile(
+    r'https?://(t\.me|telegram\.me|telegram\.dog)/[^\s,،؛;\'")\]}>]+',
     re.IGNORECASE
 )
 
 
-def contains_link(text: str) -> bool:
-    """Metinde Telegram linki var mı kontrol et."""
-    return bool(COMBINED_PATTERN.search(text))
+def contains_telegram_link(text: str, entities: list) -> bool:
+    """
+    Mesajda Telegram kanal/grup linki var mı kontrol et.
+    - t.me/... URL'leri → yakala
+    - Telegram'ın kendi 'mention' entity'si (@kullaniciadi) → yoksay (kullanıcı adı)
+    - Telegram'ın 'url' entity'si içinde t.me geçiyorsa → yakala
+    """
+    # URL pattern ile düz metin kontrolü
+    if URL_PATTERN.search(text):
+        return True
+
+    # Telegram entity'leri üzerinden kontrol (inline linkler vb.)
+    if entities:
+        for entity in entities:
+            # 'mention' tipi = @kullaniciadi → kullanıcı adı, dokunma
+            if entity.type == "mention":
+                continue
+            # 'url' veya 'text_link' ise ve t.me içeriyorsa → sil
+            if entity.type == "url":
+                start = entity.offset
+                end = entity.offset + entity.length
+                url_text = text[start:end]
+                if re.search(r'(t\.me|telegram\.me|telegram\.dog)', url_text, re.IGNORECASE):
+                    return True
+            if entity.type == "text_link" and entity.url:
+                if re.search(r'(t\.me|telegram\.me|telegram\.dog)', entity.url, re.IGNORECASE):
+                    return True
+
+    return False
 
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -64,7 +77,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not text:
         return
 
-    if not contains_link(text):
+    entities = message.entities or message.caption_entities or []
+    if not contains_telegram_link(text, entities):
         return
 
     try:
