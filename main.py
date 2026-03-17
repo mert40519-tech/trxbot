@@ -9,7 +9,7 @@ from telegram.ext import (
 )
 
 # ─── AYARLAR ────────────────────────────────────────────────
-BOT_TOKEN = "8734755865:AAGxtRIovW_RL3D2YtZiJpxfOoLTeIASIOQ"
+BOT_TOKEN = "8734755865:AAFv2w8c9RpltK8s5RkDyr22vnOwsFi_1JE"
 
 # Sadece bu grup ID'lerinde çalışsın (boş bırakırsan tüm gruplarda çalışır)
 # Örnek: ALLOWED_GROUPS = [-1001234567890, -1009876543210]
