@@ -313,8 +313,6 @@ async def deldo_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
 def main():
     app = Application.builder().token(BOT_TOKEN).build()
 
-    app.add_handler(CommandHandler("start",  yardim))
-    app.add_handler(CommandHandler("yardim", yardim))
     app.add_handler(CommandHandler("tlist",  tlist))
     app.add_handler(CommandHandler("tadd",   tadd))
     app.add_handler(CommandHandler("tsil",   tsil))
